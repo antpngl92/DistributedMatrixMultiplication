@@ -86,6 +86,8 @@ public class GRPCClientService {
         }
 
         public void grpc(int[][]a, int[][]b){
+                // (col-or-row num / 2)^2 = number of 2x2 matrices 
+
                 ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090).usePlaintext().build();        
                 MatrixServiceGrpc.MatrixServiceBlockingStub stub = MatrixServiceGrpc.newBlockingStub(channel);       
                 int A[][] = a;
