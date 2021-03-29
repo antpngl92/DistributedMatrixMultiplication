@@ -89,7 +89,7 @@ public class GRPCClientService {
 
         public void grpc(int[][]a, int[][]b){
 
-                ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090).usePlaintext().build();  
+                ManagedChannel channel = ManagedChannelBuilder.forAddress("172.31.94.130", 9090).usePlaintext().build();  
   
                 MatrixServiceGrpc.MatrixServiceBlockingStub stub = MatrixServiceGrpc.newBlockingStub(channel);
 
