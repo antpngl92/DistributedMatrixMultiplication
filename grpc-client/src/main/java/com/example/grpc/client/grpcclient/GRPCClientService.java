@@ -154,7 +154,7 @@ public class GRPCClientService {
 
 
               
-                (if number_of_server_needed < 1.00 ) number_of_server_needed = 1.00;
+                if (number_of_server_needed < 1.00 ) number_of_server_needed = 1.00;
                 if(number_of_server_needed <2.00 && number_of_server_needed > 1.00) number_of_server_needed = 2.00;
                 
                 System.out.println("Number of server needed: " + number_of_server_needed);
