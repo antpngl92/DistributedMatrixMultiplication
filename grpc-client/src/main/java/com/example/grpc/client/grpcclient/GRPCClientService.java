@@ -150,6 +150,7 @@ public class GRPCClientService {
                 int low = 0;
                 int high = 8;
                 int result = r.nextInt(high-low) + low;
+                System.out.println("Random: " + result);
                 double footprint = Double.valueOf(df.format(footPrint(stubss.get(result), a[0][0], a[N-1][N-1])));
                 
                 int number_of_calls = (int) Math.pow(N, 2);
