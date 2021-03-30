@@ -148,7 +148,7 @@ public class GRPCClientService {
                 DecimalFormat df = new DecimalFormat("#.##");
                 Random r = new Random();
                 int low = 0;
-                int high = 7;
+                int high = 8;
                 int result = r.nextInt(high-low) + low;
                 double footprint = Double.valueOf(df.format(footPrint(stubss.get(result), a[0][0], a[N-1][N-1])));
                 
