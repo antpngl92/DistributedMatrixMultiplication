@@ -24,7 +24,7 @@ import java.io.FileReader;
 import java.io.File; 
 import java.io.IOException;
 import java.util.*;
-
+import java.util.ArrayList;
 
 import com.example.grpc.client.model.FileUploadResponse;
 
@@ -71,28 +71,53 @@ public class GRPCClientService {
                 int[][] matrixA = convertToMatrix(matrixA_temp);
                 int[][] matrixB = convertToMatrix(matrixB_temp);
 
-                // // If not square matrix
-                // if(matrixA.length != matrixA[0].length || matrixB.length != matrixB[0].length){
-                //         String data  = "Matrix A: " + matrixA.length  + "x" + matrixA[0].length;
-                //                data += "  Matrix B: " + matrixB.length  + "x" + matrixB[0].length;
-                //         return new FileUploadResponse(fileName, contentType, "Rows and Columns of the Matrices should be equal size!!! " + data);
-                // }
-                // // If not even number rows and col
-                // if(matrixA.length % 4 !=0 || matrixB.length % 4 !=0 ){
-                //         String data  = "Matrix A: " + matrixA.length  + "x" + matrixA[0].length;
-                //                data += "  Matrix B: " + matrixB.length  + "x" + matrixB[0].length;
-                //         return new FileUploadResponse(fileName, contentType, "Accepted Matrices: nxn where n%4=0!!! " + data);
-                // }
+                // If not square matrix
+                if(matrixA.length != matrixA[0].length || matrixB.length != matrixB[0].length){
+                        String data  = "Matrix A: " + matrixA.length  + "x" + matrixA[0].length;
+                               data += "  Matrix B: " + matrixB.length  + "x" + matrixB[0].length;
+                        return new FileUploadResponse(fileName, contentType, "Rows and Columns of the Matrices should be equal size!!! " + data);
+                }
+                // If not even number rows and col
+                if(matrixA.length % 4 !=0 || matrixB.length % 4 !=0 ){
+                        String data  = "Matrix A: " + matrixA.length  + "x" + matrixA[0].length;
+                               data += "  Matrix B: " + matrixB.length  + "x" + matrixB[0].length;
+                        return new FileUploadResponse(fileName, contentType, "Accepted Matrices: nxn where n%4=0!!! " + data);
+                }
                 grpc(matrixA, matrixB);
                 return new FileUploadResponse(fileName, contentType, "File Successfully Uploaded");
         }
 
         public void grpc(int[][]a, int[][]b){
-
-                ManagedChannel channel = ManagedChannelBuilder.forAddress("172.31.94.130", 9090).usePlaintext().build();  
+ 
+                ManagedChannel channel1 = ManagedChannelBuilder.forAddress("172.31.94.130", 9090).usePlaintext().build();  
+                ManagedChannel channel2 = ManagedChannelBuilder.forAddress("172.31.81.112", 9090).usePlaintext().build();  
+                ManagedChannel channel3 = ManagedChannelBuilder.forAddress("172.31.94.231", 9090).usePlaintext().build();  
+                ManagedChannel channel4 = ManagedChannelBuilder.forAddress("172.31.92.51", 9090).usePlaintext().build();  
+                ManagedChannel channel5 = ManagedChannelBuilder.forAddress("172.31.81.107", 9090).usePlaintext().build();  
+                ManagedChannel channel6 = ManagedChannelBuilder.forAddress("172.31.93.184", 9090).usePlaintext().build();  
+                ManagedChannel channel7 = ManagedChannelBuilder.forAddress("172.31.88.43", 9090).usePlaintext().build();  
+                ManagedChannel channel8 = ManagedChannelBuilder.forAddress("172.31.93.187", 9090).usePlaintext().build();  
   
-                MatrixServiceGrpc.MatrixServiceBlockingStub stub = MatrixServiceGrpc.newBlockingStub(channel);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub1 = MatrixServiceGrpc.newBlockingStub(channel1);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub2 = MatrixServiceGrpc.newBlockingStub(channel2);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub3 = MatrixServiceGrpc.newBlockingStub(channel3);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub4 = MatrixServiceGrpc.newBlockingStub(channel4);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub5 = MatrixServiceGrpc.newBlockingStub(channel5);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub6 = MatrixServiceGrpc.newBlockingStub(channel6);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub7 = MatrixServiceGrpc.newBlockingStub(channel7);
+                MatrixServiceGrpc.MatrixServiceBlockingStub stub8 = MatrixServiceGrpc.newBlockingStub(channel8);
 
+                ArrayList<MatrixServiceGrpc.MatrixServiceBlockingStub> stubss = new ArrayList<MatrixServiceGrpc.MatrixServiceBlockingStub>();
+                stubss.add(stub1);
+                stubss.add(stub2);
+                stubss.add(stub3);
+                stubss.add(stub4);
+                stubss.add(stub5);
+                stubss.add(stub6);
+                stubss.add(stub7);
+                stubss.add(stub8);
+
+                int stubs_index = 0;
 
                 int N = a.length;
 
@@ -101,10 +126,14 @@ public class GRPCClientService {
                 for (int i = 0; i < N; i++) { // row
                         for (int j = 0; j < N; j++) { // col
                             for (int k = 0; k < N; k++) {
-                                MatrixReply temp=stub.multiplyBlock(MatrixRequest.newBuilder().setA(a[i][k]).setB(b[k][j]).build());
-                                MatrixReply A3=stub.addBlock(MatrixRequest.newBuilder().setA(c[i][j]).setB(temp.getC()).build());
-                                // int temp = multBlock(a[i][k], b[k][j]);
-                                c[i][j] = A3.getC();
+                                
+                                MatrixReply temp=stubss.get(stubs_index).multiplyBlock(MatrixRequest.newBuilder().setA(a[i][k]).setB(b[k][j]).build());
+                                if(stubs_index == 2) stubs_index = 0;
+                                else stubs_index++;
+                                MatrixReply temp2=stubss.get(stubs_index).addBlock(MatrixRequest.newBuilder().setA(c[i][j]).setB(temp.getC()).build());
+                                c[i][j] = temp2.getC();
+                                if(stubs_index == 2) stubs_index = 0;
+                                else stubs_index++;
                             }
                         }
                     }
@@ -119,111 +148,11 @@ public class GRPCClientService {
             
                 channel.shutdown();
 
-                // .setA00(A[0][0]).setA01(A[0][1])
-                // (col-or-row num / 2)^2 = number of 2x2 matrices 
-
-                // ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090).usePlaintext().build();        
-                // MatrixServiceGrpc.MatrixServiceBlockingStub stub = MatrixServiceGrpc.newBlockingStub(channel);       
                 
-                // int A[][] = a;
-                // int B[][] = b;
+        }
 
-                // int number_of_two_by_two_matrices = (int)Math.pow((A.length /2), 2);
-                // System.out.println(number_of_two_by_two_matrices);
-              
+        private static double footPrint(MatrixServiceGrpc.MatrixServiceBlockingStub stub, int a, int b){
 
-                // MatrixReply A3M1=stub.multiplyBlock(MatrixRequest.newBuilder()//First Result Block Calculation
-                // .setA00(A[0][0]).setA01(A[0][1])
-                // .setA10(A[1][0]).setA11(A[1][1])
-
-                // .setB00(B[0][0]).setB01(B[0][1])
-                // .setB10(B[1][0]).setB11(B[1][1])
-                // .build());
-                // MatrixReply A3M2=stub.multiplyBlock(MatrixRequest.newBuilder()
-                // .setA00(A[0][2]).setA01(A[0][3])
-                // .setA10(A[1][2]).setA11(A[1][3])
-
-                // .setB00(B[2][0]).setB01(B[2][1])
-                // .setB10(B[3][0]).setB11(B[3][1])
-                // .build());
-
-                // MatrixReply A3=stub.addBlock(MatrixRequest.newBuilder()
-                // .setA00(A3M1.getC00()).setA01(A3M1.getC01())
-                // .setA10(A3M1.getC10()).setA11(A3M1.getC11())
-
-                // .setB00(A3M2.getC00()).setB01(A3M2.getC01())
-                // .setB10(A3M2.getC10()).setB11(A3M2.getC11())
-                // .build());
-                // MatrixReply B3M1=stub.multiplyBlock(MatrixRequest.newBuilder()//Second Result Block Calculation
-                // .setA00(A[0][0]).setA01(A[0][1])
-                // .setA10(A[1][0]).setA11(A[1][1])
-
-                // .setB00(B[0][2]).setB01(B[0][3])
-                // .setB10(B[1][2]).setB11(B[1][3])
-                // .build());
-                // MatrixReply B3M2=stub.multiplyBlock(MatrixRequest.newBuilder()
-                // .setA00(A[0][2]).setA01(A[0][3])
-                // .setA10(A[1][2]).setA11(A[1][3])
-
-                // .setB00(B[2][2]).setB01(B[2][3])
-                // .setB10(B[3][2]).setB11(B[3][3])
-                // .build());
-                // MatrixReply B3=stub.addBlock(MatrixRequest.newBuilder()
-                // .setA00(B3M1.getC00()).setA01(B3M1.getC01())
-                // .setA10(B3M1.getC10()).setA11(B3M1.getC11())
-
-                // .setB00(B3M2.getC00()).setB01(B3M2.getC01())
-                // .setB10(B3M2.getC10()).setB11(B3M2.getC11())
-                // .build());
-                // MatrixReply C3M1=stub.multiplyBlock(MatrixRequest.newBuilder()//Third Result Block Calculation
-                // .setA00(A[2][0]).setA01(A[2][1])
-                // .setA10(A[3][0]).setA11(A[3][1])
-
-                // .setB00(B[0][0]).setB01(B[0][1])
-                // .setB10(B[1][0]).setB11(B[1][1])
-                // .build());
-                // MatrixReply C3M2=stub.multiplyBlock(MatrixRequest.newBuilder()
-                // .setA00(A[2][2]).setA01(A[2][3])
-                // .setA10(A[3][2]).setA11(A[3][3])
-
-                // .setB00(B[2][0]).setB01(B[2][1])
-                // .setB10(B[3][0]).setB11(B[3][1])
-                // .build());
-                // MatrixReply C3=stub.addBlock(MatrixRequest.newBuilder()
-                // .setA00(C3M1.getC00()).setA01(C3M1.getC01())
-                // .setA10(C3M1.getC10()).setA11(C3M1.getC11())
-
-                // .setB00(C3M2.getC00()).setB01(C3M2.getC01())
-                // .setB10(C3M2.getC10()).setB11(C3M2.getC11())
-                // .build());
-                // MatrixReply D3M1=stub.multiplyBlock(MatrixRequest.newBuilder()//Fourth Result Block Calculation
-                // .setA00(A[2][0]).setA01(A[2][1])
-                // .setA10(A[3][0]).setA11(A[3][1])
-
-                // .setB00(B[0][2]).setB01(B[0][3])
-                // .setB10(B[1][2]).setB11(B[1][3])
-                // .build());
-                // MatrixReply D3M2=stub.multiplyBlock(MatrixRequest.newBuilder()
-                // .setA00(A[2][2]).setA01(A[2][3])
-                // .setA10(A[3][2]).setA11(A[3][3])
-
-                // .setB00(B[2][2]).setB01(B[2][3])
-                // .setB10(B[3][2]).setB11(B[3][3])
-                // .build());
-                // MatrixReply D3=stub.addBlock(MatrixRequest.newBuilder()
-                // .setA00(D3M1.getC00()).setA01(D3M1.getC01())
-                // .setA10(D3M1.getC10()).setA11(D3M1.getC11())
-
-                // .setB00(D3M2.getC00()).setB01(D3M2.getC01())
-                // .setB10(D3M2.getC10()).setB11(D3M2.getC11())
-                // .build());
-
-                // System.out.println("Final Answer");
-                // System.out.println(A3.getC00()+" "+A3.getC01()+" "+B3.getC00()+" "+B3.getC01());
-                // System.out.println(A3.getC10()+" "+A3.getC11()+" "+B3.getC10()+" "+B3.getC11());
-                // System.out.println(C3.getC00()+" "+A3.getC01()+" "+D3.getC00()+" "+B3.getC01());
-                // System.out.println(C3.getC10()+" "+C3.getC11()+" "+D3.getC10()+" "+D3.getC11());
-                // channel.shutdown();
         }
 
         public static int[][] convertToMatrix(String m){
@@ -267,3 +196,4 @@ public class GRPCClientService {
 
 
 }
+
