@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.ArrayList;
 import java.text.DecimalFormat;
+import java.util.Random;
 
 import com.example.grpc.client.model.FileUploadResponse;
 
@@ -145,8 +146,11 @@ public class GRPCClientService {
                 int N = a.length;
 
                 DecimalFormat df = new DecimalFormat("#.##");
-
-                double footprint = Double.valueOf(df.format(footPrint(stubss.get(0), a[0][0], a[N-1][N-1])));
+                Random r = new Random();
+                int low = 0;
+                int high = 7;
+                int result = r.nextInt(high-low) + low;
+                double footprint = Double.valueOf(df.format(footPrint(stubss.get(result), a[0][0], a[N-1][N-1])));
                 
                 int number_of_calls = (int) Math.pow(N, 2);
                 double execution_time = number_of_calls*footprint;
