@@ -94,7 +94,7 @@ public class GRPCClientService {
 
         public void grpcClient(int[][]a, int[][]b, int deadline){
                 System.out.println("\n=====================================");
-                System.out.println("Deadline: " + 300 + " seconds"); // 5 min
+                System.out.println("Deadline: " + deadline + " seconds"); // 5 min
                 // Different AWS private IP's
                 String aws1 = "172.31.94.130"; 
                 String aws2 = "172.31.81.112"; 
@@ -154,7 +154,7 @@ public class GRPCClientService {
 
 
               
-
+                (if number_of_server_needed < 1.00 ) number_of_server_needed = 1.00;
                 if(number_of_server_needed <2.00 && number_of_server_needed > 1.00) number_of_server_needed = 2.00;
                 
                 System.out.println("Number of server needed: " + number_of_server_needed);
