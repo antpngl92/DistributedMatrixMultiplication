@@ -53,7 +53,7 @@ public class GRPCClientService {
         public FileUploadResponse fileUpload(@RequestParam("file") MultipartFile file){
 
                 fileName = file.getOriginalFilename();
-                uploadFilePath = "/home/anton/Desktop/DS_CW/grpcNew/Files";
+                uploadFilePath = "/home/ubuntu/grpcNew/Files";
                 contentType = file.getContentType();
                 dest = new File(uploadFilePath + '/' + fileName);
 
