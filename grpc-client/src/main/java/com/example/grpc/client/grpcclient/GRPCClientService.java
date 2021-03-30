@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.ArrayList;
+import java.text.DecimalFormat;
 
 import com.example.grpc.client.model.FileUploadResponse;
 
@@ -50,10 +51,14 @@ public class GRPCClientService {
                 return helloResponse.getPong();
         }
 
-        public FileUploadResponse fileUpload(@RequestParam("file") MultipartFile file){
-
+        public FileUploadResponse fileUpload(@RequestParam("file") MultipartFile file,@RequestParam("deadline") int deadline){
+                
                 fileName = file.getOriginalFilename();
-                uploadFilePath = "/home/ubuntu/grpcNew/Files";
+                String filePathServer = "/home/ubuntu/grpcNew/Files";
+                String filePathLocal = "/home/anton/Desktop/DS_CW/grpcCW/grpcNew/Files";
+
+                uploadFilePath = filePathLocal;
+
                 contentType = file.getContentType();
                 dest = new File(uploadFilePath + '/' + fileName);
 
@@ -83,21 +88,36 @@ public class GRPCClientService {
                                data += "  Matrix B: " + matrixB.length  + "x" + matrixB[0].length;
                         return new FileUploadResponse(fileName, contentType, "Accepted Matrices: nxn where n%4=0!!! " + data);
                 }
-                grpc(matrixA, matrixB);
+                grpcClient(matrixA, matrixB, deadline);
                 return new FileUploadResponse(fileName, contentType, "File Successfully Uploaded");
         }
 
-        public void grpc(int[][]a, int[][]b){
- 
-                ManagedChannel channel1 = ManagedChannelBuilder.forAddress("172.31.94.130", 9090).usePlaintext().build();  
-                ManagedChannel channel2 = ManagedChannelBuilder.forAddress("172.31.81.112", 9090).usePlaintext().build();  
-                ManagedChannel channel3 = ManagedChannelBuilder.forAddress("172.31.94.231", 9090).usePlaintext().build();  
-                ManagedChannel channel4 = ManagedChannelBuilder.forAddress("172.31.92.51", 9090).usePlaintext().build();  
-                ManagedChannel channel5 = ManagedChannelBuilder.forAddress("172.31.81.107", 9090).usePlaintext().build();  
-                ManagedChannel channel6 = ManagedChannelBuilder.forAddress("172.31.93.184", 9090).usePlaintext().build();  
-                ManagedChannel channel7 = ManagedChannelBuilder.forAddress("172.31.88.43", 9090).usePlaintext().build();  
-                ManagedChannel channel8 = ManagedChannelBuilder.forAddress("172.31.93.187", 9090).usePlaintext().build();  
-  
+        public void grpcClient(int[][]a, int[][]b, int deadline){
+                System.out.println("\n=====================================");
+                System.out.println("Deadline: " + 300 + " seconds"); // 5 min
+                // Different AWS private IP's
+                String aws1 = "172.31.94.130"; 
+                String aws2 = "172.31.81.112"; 
+                String aws3 = "172.31.94.231"; 
+                String aws4 = "172.31.92.51"; 
+                String aws5 = "172.31.81.107";
+                String aws6 = "172.31.93.184"; 
+                String aws7 = "172.31.88.43"; 
+                String aws8 = "172.31.93.187";
+
+                // String local = "localhost";
+
+                // Different channels for each AWS 
+                ManagedChannel channel1 = ManagedChannelBuilder.forAddress(aws1, 9090).usePlaintext().build();  
+                ManagedChannel channel2 = ManagedChannelBuilder.forAddress(aws2, 9090).usePlaintext().build();  
+                ManagedChannel channel3 = ManagedChannelBuilder.forAddress(aws3, 9090).usePlaintext().build();  
+                ManagedChannel channel4 = ManagedChannelBuilder.forAddress(aws4, 9090).usePlaintext().build();  
+                ManagedChannel channel5 = ManagedChannelBuilder.forAddress(aws5, 9090).usePlaintext().build();  
+                ManagedChannel channel6 = ManagedChannelBuilder.forAddress(aws6, 9090).usePlaintext().build();  
+                ManagedChannel channel7 = ManagedChannelBuilder.forAddress(aws7, 9090).usePlaintext().build();  
+                ManagedChannel channel8 = ManagedChannelBuilder.forAddress(aws8, 9090).usePlaintext().build();  
+
+                // Different Stubs for each channel
                 MatrixServiceGrpc.MatrixServiceBlockingStub stub1 = MatrixServiceGrpc.newBlockingStub(channel1);
                 MatrixServiceGrpc.MatrixServiceBlockingStub stub2 = MatrixServiceGrpc.newBlockingStub(channel2);
                 MatrixServiceGrpc.MatrixServiceBlockingStub stub3 = MatrixServiceGrpc.newBlockingStub(channel3);
@@ -107,6 +127,7 @@ public class GRPCClientService {
                 MatrixServiceGrpc.MatrixServiceBlockingStub stub7 = MatrixServiceGrpc.newBlockingStub(channel7);
                 MatrixServiceGrpc.MatrixServiceBlockingStub stub8 = MatrixServiceGrpc.newBlockingStub(channel8);
 
+                // Contains all stubs 
                 ArrayList<MatrixServiceGrpc.MatrixServiceBlockingStub> stubss = new ArrayList<MatrixServiceGrpc.MatrixServiceBlockingStub>();
                 stubss.add(stub1);
                 stubss.add(stub2);
@@ -117,54 +138,98 @@ public class GRPCClientService {
                 stubss.add(stub7);
                 stubss.add(stub8);
 
+                // Counts stubs into the matrix calculation
                 int stubs_index = 0;
 
+                // Length row
                 int N = a.length;
 
-                int c[][] = new int[N][N];
+                DecimalFormat df = new DecimalFormat("#.##");
 
+                double footprint = Double.valueOf(df.format(footPrint(stubss.get(0), a[0][0], a[N-1][N-1])));
+                
+                int number_of_calls = (int) Math.pow(N, 2);
+                double execution_time = number_of_calls*footprint;
+                double number_of_server_needed = execution_time/deadline;
+
+
+              
+
+                if(number_of_server_needed <2.00 && number_of_server_needed > 1.00) number_of_server_needed = 2.00;
+                
+                System.out.println("Number of server needed: " + number_of_server_needed);
+                System.out.println("=====================================");
+                System.out.println("Footprint: " + footprint + " seconds");
+                System.out.println("=====================================");
+                
+                
+
+                if((number_of_server_needed > 8) ){
+                        number_of_server_needed = 8;
+                        if(deadline <= 50){
+                                System.out.println("Footprint: " + footprint + "\nFootprint x number of calls: " + (footprint*number_of_calls));
+                                System.out.println("The load exceeds the deadline, multiplication cannot be done!");
+                                return;
+                        }
+                }
+                int number_of_servers_in_use = (int) Math.round(number_of_server_needed);
+                System.out.println("Number of used servers: " + number_of_servers_in_use);
+                System.out.println("=====================================\n");
+                int c[][] = new int[N][N];
                 for (int i = 0; i < N; i++) { // row
                         for (int j = 0; j < N; j++) { // col
                             for (int k = 0; k < N; k++) {
                                 
                                 MatrixReply temp=stubss.get(stubs_index).multiplyBlock(MatrixRequest.newBuilder().setA(a[i][k]).setB(b[k][j]).build());
-                                if(stubs_index == 2) stubs_index = 0;
+                                if(stubs_index == number_of_servers_in_use-1) stubs_index = 0;
                                 else stubs_index++;
                                 MatrixReply temp2=stubss.get(stubs_index).addBlock(MatrixRequest.newBuilder().setA(c[i][j]).setB(temp.getC()).build());
                                 c[i][j] = temp2.getC();
-                                if(stubs_index == 2) stubs_index = 0;
+                                if(stubs_index == number_of_servers_in_use-1) stubs_index = 0;
                                 else stubs_index++;
                             }
                         }
                     }
 
-                
+                    // Print result matrix
                     for (int i = 0; i < a.length; i++) {
                         for (int j = 0; j < a[0].length; j++) {
                             System.out.print(c[i][j] + " ");
                         }
                         System.out.println("");
                     }
-            
-                channel.shutdown();
+                // Close channels
+                channel1.shutdown();
+                channel2.shutdown();
+                channel3.shutdown();
+                channel4.shutdown();
+                channel5.shutdown();
+                channel6.shutdown();
+                channel7.shutdown();
+                channel8.shutdown();
 
                 
         }
-
+        // returns seconds
         private static double footPrint(MatrixServiceGrpc.MatrixServiceBlockingStub stub, int a, int b){
 
+                double startTime = System.nanoTime();
+                MatrixReply temp=stub.multiplyBlock(MatrixRequest.newBuilder().setA(a).setB(b).build());
+                double endTime = System.nanoTime();
+                double footprint= endTime-startTime;
+                return (footprint/1000000000);
         }
-
+        // Get the matrix string and convert it to 2D array
         public static int[][] convertToMatrix(String m){
+
                 String[] data = m.split(";");
                 String row_col[] = data[0].split(",");
                 // Get rows and data into int var. 
                 int row = Integer.parseInt(row_col[0].replaceAll("[\\n\\t ]", ""));
                 int col = Integer.parseInt(row_col[1].replaceAll("[\\n\\t ]", ""));
 
-                
- 
                 String[] matrixData_temp = data[1].split(" ");
+               
                 int[][] matrix = new int[row][col];
                 int temp_matrix_index = 0; 
                  
@@ -177,7 +242,7 @@ public class GRPCClientService {
                 return matrix;
         }
 
-
+        // Get matrix string from the file
         public static String txt2String(File file) {
                 StringBuilder result = new StringBuilder();
                 try {

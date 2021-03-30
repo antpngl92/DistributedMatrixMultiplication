@@ -32,7 +32,7 @@ public class PingPongEndpoint {
 
 
 	@PostMapping("/upload")
-		public FileUploadResponse fileUpload(@RequestParam("file") MultipartFile file) throws IllegalStateException, IOException{
-			return grpcClientService.fileUpload(file);
+		public FileUploadResponse fileUpload(@RequestParam("file") MultipartFile file,@RequestParam("deadline") int deadline) throws IllegalStateException, IOException{
+			return grpcClientService.fileUpload(file, deadline);
 		}
 }
