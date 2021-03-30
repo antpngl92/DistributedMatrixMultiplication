@@ -57,7 +57,7 @@ public class GRPCClientService {
                 String filePathServer = "/home/ubuntu/grpcNew/Files";
                 String filePathLocal = "/home/anton/Desktop/DS_CW/grpcCW/grpcNew/Files";
 
-                uploadFilePath = filePathLocal;
+                uploadFilePath = filePathServer;
 
                 contentType = file.getContentType();
                 dest = new File(uploadFilePath + '/' + fileName);
