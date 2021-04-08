@@ -52,24 +52,25 @@ public class GRPCClientService {
                 return helloResponse.getPong();
         }
 
+        // File upload endpoint  
         public FileUploadResponse fileUpload(@RequestParam("file") MultipartFile file,@RequestParam("deadline") int deadline){
                 
-                fileName = file.getOriginalFilename();
-                String filePathServer = "/home/ubuntu/grpcNew/Files";
-                String filePathLocal = "/home/anton/Desktop/DS_CW/grpcCW/grpcNew/Files";
+                fileName = file.getOriginalFilename(); // get file name 
+                String filePathServer = "/home/ubuntu/grpcNew/Files"; // use to save file for server development 
+
 
                 uploadFilePath = filePathServer;
 
                 contentType = file.getContentType();
                 dest = new File(uploadFilePath + '/' + fileName);
 
-                if (!dest.getParentFile().exists())  dest.getParentFile().mkdirs();
+                if (!dest.getParentFile().exists())  dest.getParentFile().mkdirs(); // make directory if doesn't exist
                     
-
+        
                 try { file.transferTo(dest); }
                 catch (Exception e) { return new FileUploadResponse(fileName, contentType, "File is not provided, please add a file!!! " + e.getMessage()); }
 
-                // Get matrices from file 
+                // Get both matrices from a single file 
                 String matrixA_temp = txt2String(dest).split(matrixSymbols)[0];
                 String matrixB_temp = txt2String(dest).split(matrixSymbols)[1];
 
@@ -95,18 +96,19 @@ public class GRPCClientService {
 
         public void grpcClient(int[][]a, int[][]b, int deadline){
                 System.out.println("\n=====================================");
-                System.out.println("Deadline: " + deadline + " seconds"); // 5 min
-                // Different AWS private IP's
-                String aws1 = "172.31.94.130"; 
-                String aws2 = "172.31.81.112"; 
-                String aws3 = "172.31.94.231"; 
-                String aws4 = "172.31.92.51"; 
-                String aws5 = "172.31.81.107";
-                String aws6 = "172.31.93.184"; 
-                String aws7 = "172.31.88.43"; 
-                String aws8 = "172.31.93.187";
+                System.out.println("Deadline: " + deadline + " seconds"); 
 
-                // String local = "localhost";
+                // Different AWS private IP's
+                String aws1 = ""; 
+                String aws2 = ""; 
+                String aws3 = ""; 
+                String aws4 = ""; 
+                String aws5 = "";
+                String aws6 = ""; 
+                String aws7 = ""; 
+                String aws8 = "";
+
+                // String local = "localhost"; - used for development testing 
 
                 // Different channels for each AWS 
                 ManagedChannel channel1 = ManagedChannelBuilder.forAddress(aws1, 9090).usePlaintext().build();  
@@ -145,21 +147,23 @@ public class GRPCClientService {
                 // Length row
                 int N = a.length;
 
-                DecimalFormat df = new DecimalFormat("#.##");
+                // use a random stub from the stub array to calculate footprint 
+                DecimalFormat df = new DecimalFormat("#.##"); 
                 Random r = new Random();
                 int low = 0;
                 int high = 8;
-                int result = r.nextInt(high-low) + low;
-                System.out.println("Random: " + result);
-                double footprint = Double.valueOf(df.format(footPrint(stubss.get(result), a[0][0], a[N-1][N-1])));
+                int random = r.nextInt(high-low) + low;
+                double footprint = Double.valueOf(df.format(footPrint(stubss.get(random), a[0][0], a[N-1][N-1])));
                 
+                // Get execution time and number of needed servers
                 int number_of_calls = (int) Math.pow(N, 2);
                 double execution_time = number_of_calls*footprint;
                 double number_of_server_needed = execution_time/deadline;
 
 
-              
+                // if less than one server needed provide one server
                 if (number_of_server_needed < 1.00 ) number_of_server_needed = 1.00;
+                // if more than one but less than 2 server needed use 2 servers
                 if(number_of_server_needed <2.00 && number_of_server_needed > 1.00) number_of_server_needed = 2.00;
                 
                 System.out.println("Number of server needed: " + number_of_server_needed);
@@ -170,6 +174,8 @@ public class GRPCClientService {
                 
 
                 if((number_of_server_needed > 8) ){
+                        // If more than 8 servers needed to the operation to 8 servers and if the deadline is unrealistick provide 
+                        // appropriate mesage and quit 
                         number_of_server_needed = 8;
                         if(deadline <= 50){
                                 System.out.println("Footprint: " + footprint + "\nFootprint x number of calls: " + (footprint*number_of_calls));
@@ -177,10 +183,13 @@ public class GRPCClientService {
                                 return;
                         }
                 }
+
                 int number_of_servers_in_use = (int) Math.round(number_of_server_needed);
                 System.out.println("Number of used servers: " + number_of_servers_in_use);
                 System.out.println("=====================================\n");
                 int c[][] = new int[N][N];
+
+                // Start the matrix calculation and print the result onto client 
                 for (int i = 0; i < N; i++) { // row
                         for (int j = 0; j < N; j++) { // col
                             for (int k = 0; k < N; k++) {
@@ -212,10 +221,9 @@ public class GRPCClientService {
                 channel6.shutdown();
                 channel7.shutdown();
                 channel8.shutdown();
-
                 
         }
-        // returns seconds
+        // calculate footprinting and return seconds
         private static double footPrint(MatrixServiceGrpc.MatrixServiceBlockingStub stub, int a, int b){
 
                 double startTime = System.nanoTime();
@@ -224,16 +232,17 @@ public class GRPCClientService {
                 double footprint= endTime-startTime;
                 return (footprint/1000000000);
         }
-        // Get the matrix string and convert it to 2D array
+        // txt2String matrix into 2D int array
         public static int[][] convertToMatrix(String m){
 
-                String[] data = m.split(";");
-                String row_col[] = data[0].split(",");
-                // Get rows and data into int var. 
+                // split matrices row and col number from actual matrix data
+                String[] data = m.split(";"); // get matrix data 
+                String row_col[] = data[0].split(","); // get matrix row and cl 
+                // Get row and col number into int var. 
                 int row = Integer.parseInt(row_col[0].replaceAll("[\\n\\t ]", ""));
                 int col = Integer.parseInt(row_col[1].replaceAll("[\\n\\t ]", ""));
 
-                String[] matrixData_temp = data[1].split(" ");
+                String[] matrixData_temp = data[1].split(" "); // get the matrix data into string array 
                
                 int[][] matrix = new int[row][col];
                 int temp_matrix_index = 0; 
@@ -266,4 +275,3 @@ public class GRPCClientService {
 
 
 }
-

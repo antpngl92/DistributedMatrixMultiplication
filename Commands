@@ -1,0 +1,2 @@
+Clinet command: ./mvnw clean spring-boot:run
+Server command: ./mvnw clean spring-boot:run -Dmaven.test.skip=true
