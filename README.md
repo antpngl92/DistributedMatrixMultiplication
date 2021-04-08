@@ -3,7 +3,9 @@
 
 ## References: 
 https://grpc.io/
+
 https://grpc.io/docs/languages/java/basics/
+
 https://spring.io/guides/tutorials/rest/
 
 ## Setup:
