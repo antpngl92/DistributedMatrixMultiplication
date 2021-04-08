@@ -17,5 +17,10 @@ At least 9 servers
 
 To upload matrix file use ```<server_public_ip>:8082/upload```. 
 The call accepts a body form data with 2 keys:
-1. file - txt file containing 2 matrices - check provided file matrices (text.txt, text32x32, ...) for matrix format
+1. file - txt file containing 2 matrices - check provided file (MatrixFormatFile.txt) for matrix format
 2. deadline - in seconds
+
+
+## NOTE:
+This version is implemented using ```ServiceNameBlockingStub``` for better performance and scalling an asynchronous stub can be used:
+https://grpc.io/docs/languages/java/generated-code/#asynchronous-stub
